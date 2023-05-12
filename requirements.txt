@@ -1,0 +1,2 @@
+cellpylib==2.4.0
+setuptools==66.0.0
