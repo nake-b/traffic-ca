@@ -1,2 +1,4 @@
 cellpylib==2.4.0
+matplotlib==3.7.1
+numpy==1.24.3
 setuptools==66.0.0
