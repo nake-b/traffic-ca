@@ -66,12 +66,7 @@ class TrafficCA1D:
         # Acceleration
         car.accelerate()
         # Deceleration
-        if next_car is None:
-            new_speed = car.velocity
-        else:
-            dist = car.distance_to(next_car)
-            new_speed = min(dist, car.velocity)
-        car.set_velocity(new_speed)
+        car.react(next_car)
         # Randomization
         if random_bool(self.slowdown_probability):
             car.decelerate()

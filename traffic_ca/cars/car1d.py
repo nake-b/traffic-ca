@@ -28,3 +28,11 @@ class Car1D:
         if val < 0:
             raise ValueError("Velocity must be non-negative.")
         self.velocity = val
+
+    def react(self, next_car: Optional["Car1D"]) -> None:
+        if next_car is None:  # No reaction
+            return
+        # Else max velocity is the number of free cells in front
+        dist = self.distance_to(next_car)
+        new_velocity = min(dist, self.velocity)
+        self.set_velocity(new_velocity)
