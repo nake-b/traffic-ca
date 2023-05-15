@@ -4,7 +4,7 @@ from typing import Optional
 import cellpylib as cpl
 import numpy as np
 
-from traffic_ca.car import Car1D
+from traffic_ca.cars.car1d import Car1D
 from traffic_ca.utils import plot1d_animate, random_bool
 
 CITY_TRAFFIC_SLOWDOWN_PROBABILITY = 0.5
@@ -67,11 +67,11 @@ class TrafficCA1D:
         car.accelerate()
         # Deceleration
         if next_car is None:
-            new_speed = car.speed
+            new_speed = car.velocity
         else:
             dist = car.distance_to(next_car)
-            new_speed = min(dist, car.speed)
-        car.set_speed(new_speed)
+            new_speed = min(dist, car.velocity)
+        car.set_velocity(new_speed)
         # Randomization
         if random_bool(self.slowdown_probability):
             car.decelerate()
