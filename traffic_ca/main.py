@@ -1,4 +1,13 @@
-from traffic_ca.automata.traffic_ca_1d import TrafficCA1D
+from traffic_ca.automaton import TrafficCA
+from traffic_ca.entity.accident import Accident
 
 if __name__ == "__main__":
-    TrafficCA1D(init_density=0.2, slowdown_probability=0.3).animate(interval=300)
+    TrafficCA(
+        highway_len=500,
+        init_density=0.4,
+        slowdown_probability=0.3,
+        car_entry_probability=0.7,
+        accident=Accident(position=150, start_timestep=100, duration=100),
+        max_velocity=5,
+        timesteps=600,
+    ).plot_flow_time()
