@@ -15,7 +15,7 @@ def plot1d_animate(
     title="",
     *,
     colormap="Greys",
-    show_grid=False,
+    show_grid=True,
     show_margin=True,
     scale=0.6,
     dpi=80,
@@ -65,6 +65,8 @@ def plot1d_animate(
     """
     cmap = plt.get_cmap(colormap)
     fig, ax = plt.subplots(figsize=(15, 5))
+    ax.set_yticklabels([])
+    ax.set_yticks([])
     plt.title(title)
     if not show_margin:
         fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
