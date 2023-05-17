@@ -200,6 +200,22 @@ class TrafficCA:
             )
         plt.show()
 
+    def plot_space_velocity_time(self):
+        plt.style.use("seaborn-darkgrid")
+        fig = plt.figure(figsize=(10, 10))
+        ax = fig.add_subplot(projection="3d")
+        for t in range(self.timesteps):
+            X_positions = self.__ca[t]
+            X = np.argwhere(X_positions)
+            Y = [t]
+            Z_positions = self.__velocity_matrix[t]
+            Z = [Z_positions[x] for x in X]
+            ax.scatter(X, Y, Z, s=0.6, c="black", marker="s")
+        ax.set_xlabel("Space")
+        ax.set_ylabel("Time")
+        ax.set_zlabel("Velocity")
+        plt.show()
+
     def __check_normalized_float_attr(self, name: str, val: float) -> float:
         if not (0 <= val <= 1):
             raise ValueError(
