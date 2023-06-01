@@ -10,4 +10,4 @@ if __name__ == "__main__":
         accident=Accident(position=150, start_timestep=100, duration=100),
         max_velocity=5,
         timesteps=600,
-    ).plot_flow_time()
+    ).animate()
