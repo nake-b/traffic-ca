@@ -11,5 +11,5 @@ setuptools.setup(
     install_requires=reqs,
     author_email="basicnadir@gmail.com",
     packages=setuptools.find_packages(),
-    zip_safe=False,
+    zip_safe=True,
 )

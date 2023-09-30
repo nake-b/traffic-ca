@@ -16,11 +16,11 @@ HIGHWAY_TRAFFIC_SLOWDOWN_PROBABILITY = 0.3
 class TrafficCA:
     def __init__(
         self,
-        highway_len: int = 200,
+        highway_len: int = 350,
         max_velocity: int = 5,
-        init_density: float = 0.6,
+        init_density: float = 0.4,
         slowdown_probability: float = HIGHWAY_TRAFFIC_SLOWDOWN_PROBABILITY,
-        car_entry_probability: float = 0.4,
+        car_entry_probability: float = 0.7,
         accident: Optional[Accident] = None,
         timesteps: Optional[int] = None,
     ):
@@ -140,10 +140,11 @@ class TrafficCA:
 
     def __plot_over_time(self, vals: np.array, ylabel: str, **kwargs):
         plt.style.use("classic")
-        plt.figure(figsize=(10, 10))
+        # plt.figure(figsize=(10, 10))
         plt.imshow(vals, **kwargs)
         plt.xlabel("Timestep")
         plt.ylabel(ylabel)
+        plt.title(f"{ylabel.capitalize()} over time plot", y=1.05)
         plt.show()
 
     def plot_space_time(self):
@@ -197,7 +198,9 @@ class TrafficCA:
                 self.accident.end_timestep,
                 color="red",
                 alpha=0.4,
+                label="Accident",
             )
+        plt.legend()
         plt.show()
 
     def plot_space_velocity_time(self):
