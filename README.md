@@ -16,10 +16,8 @@ conda activate traffic_ca
 ```shell
 pip install -e .
 ```
-
-## How to use
-Run `python traffic_ca/main.py` for an example STCA animation.
 ## Example usage
+Run `python traffic_ca/main.py` for an example STCA animation. 
 ```python
 from traffic_ca.automaton import TrafficCA
 from traffic_ca.entity.accident import Accident
