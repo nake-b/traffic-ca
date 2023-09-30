@@ -20,7 +20,7 @@ def plot1d_animate(
     scale=0.6,
     dpi=80,
     interval=50,
-    save=False,
+    save_path=None,
     autoscale=False,
     show=True,
     **imshow_kwargs
@@ -94,8 +94,8 @@ def plot1d_animate(
     ani = animation.FuncAnimation(
         fig, updatefig, interval=interval, blit=True, save_count=len(ca)
     )
-    if save:
-        ani.save("evolved.gif", dpi=dpi, writer="imagemagick")
+    if save_path is not None:
+        ani.save(save_path, dpi=dpi, writer="imagemagick")
     if show:
         plt.show()
     return ani
