@@ -1,4 +1,3 @@
-import random
 from typing import Optional
 
 import cellpylib as cpl
@@ -6,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from traffic_ca.entity.accident import Accident
-from traffic_ca.entity.car import Car
-from traffic_ca.utils import plot1d_animate, random_bool
+from traffic_ca.traffic_manager import TrafficManager
+from traffic_ca.utils import plot1d_animate
 
 CITY_TRAFFIC_SLOWDOWN_PROBABILITY = 0.5
 HIGHWAY_TRAFFIC_SLOWDOWN_PROBABILITY = 0.3
@@ -30,122 +29,69 @@ class TrafficCA:
         if timesteps is None:
             timesteps = highway_len
         self.timesteps = timesteps
-        self.car_entry_probability = self.__check_normalized_float_attr(
-            "car_entry_probability", car_entry_probability
+        normalized_attrs = {
+            "car_entry_probability": car_entry_probability,
+            "slowdown_probability": slowdown_probability,
+            "init_density": init_density,
+        }
+        for name, attr in normalized_attrs.items():
+            self.__check_normalized_float_attr(name, attr)
+        self.__traffic_manager = TrafficManager(
+            highway_len=highway_len,
+            max_velocity=max_velocity,
+            car_entry_probability=car_entry_probability,
+            slowdown_probability=slowdown_probability,
+            init_density=init_density,
+            accident=accident,
         )
-        self.__car_entry_queue = []
-        self.slowdown_probability = self.__check_normalized_float_attr(
-            "slowdown_probability", slowdown_probability
-        )
-        self.init_density = self.__check_normalized_float_attr(
-            "init_density", init_density
-        )
-        self.__cars = self.__init_random_cars()
         self.__ca = self.__init_ca()
-        self.__velocity_matrix = [np.zeros(self.highway_len)]
-        self.__last_t = 0
+        self.__velocity_matrix = self.__init_velocity_matrix()
         self.__anim = None
         # Finally
+        self.__last_timestep = 0
         self.__evolve()
-        self.__velocity_matrix[0] = self.__velocity_matrix[1]
 
-    def __evolve(self):
+    def __evolve(self) -> None:
+        """
+        Evolves the internal cellpylib cellular automaton
+        """
         self.__ca = cpl.evolve(
             self.__ca,
             timesteps=self.timesteps,
-            apply_rule=self.__rule,
+            apply_rule=self.__cpl_update_rule,
             r=self.highway_len,
         )
 
-    def __rule(self, n, c, t) -> bool:
-        self.__update(t)
-        for car in self.__cars:
-            if car.position == c:
-                return True
-        return False
-
-    def __update(self, t) -> None:
-        if t == self.__last_t:
-            return
-        self.__last_t = t
-        self.__update_accident(t)
-        self.__update_cars()
-        self.__update_velocity_matrix()
-
-    def __update_car(self, car: Car, next_car: Optional[Car]):
-        # Acceleration
-        car.accelerate()
-        # Deceleration
-        reaction_objects = [next_car]
-        if self.accident is not None and self.accident.occurring:
-            reaction_objects.append(self.accident)
-        for _object in reaction_objects:
-            car.react(_object)
-        # Randomization
-        if random_bool(self.slowdown_probability):
-            car.decelerate()
-        # Move
-        car.move()
-        if car.position >= self.highway_len:
-            self.__cars.remove(car)
-
-    def __update_cars(self) -> None:
-        self.__cars.sort(key=lambda car: car.position)
-        next_cars = self.__cars[1:] + [None]
-        for car, next_car in zip(self.__cars, next_cars):
-            self.__update_car(car, next_car)
-        self.__update_car_entry_queue()
-
-    def __update_car_entry_queue(self):
-        if random_bool(self.car_entry_probability):
-            new_car = Car(position=0, velocity=1, max_velocity=self.max_velocity)
-            self.__car_entry_queue.append(new_car)
-        if self.__car_entry_queue and min(car.position for car in self.__cars) != 0:
-            first_car_in_q = self.__car_entry_queue.pop()
-            self.__cars.append(first_car_in_q)
-
-    def __update_accident(self, t: int):
-        if self.accident is None:
-            return
-        self.accident.update(t)
+    def __cpl_update_rule(self, _, cell_idx: int, timestep: int) -> bool:
+        """
+        Value for cpl.evolve apply_rule parameter
+        :param _:  cell's neighbourhood - NOT USED IN STCA
+        :param cell_idx: index of the cell in the CA
+        :param timestep: current timestep, from [0, self.timestep]
+        :return: state of the cell wit the index "cell_idx" in the timestep "timestep"
+        """
+        if timestep != self.__last_timestep:
+            self.__last_timestep = timestep
+            self.__traffic_manager.update_traffic(timestep)
+            self.__update_velocity_matrix()
+        return cell_idx in self.__traffic_manager.car_positions
 
     def __init_ca(self):
         ca = np.zeros(self.highway_len)
-        for car in self.__cars:
-            ca[car.position] = 1
+        for idx in self.__traffic_manager.car_positions:
+            ca[idx] = 1
         return np.array([ca])
 
+    def __init_velocity_matrix(self) -> list[np.ndarray]:
+        return [self.__traffic_manager.car_velocities]
+
     def __update_velocity_matrix(self):
-        vels = np.zeros(self.highway_len)
-        for car in self.__cars:
-            vels[car.position] = car.velocity
+        vels = self.__traffic_manager.car_velocities
         self.__velocity_matrix.append(vels)
-
-    def __gen_cars(self, positions: list[int], velocities: list[int]) -> list[Car]:
-        return [
-            Car(pos, vel, self.max_velocity) for pos, vel in zip(positions, velocities)
-        ]
-
-    def __init_random_cars(self) -> list[Car]:
-        all_positions = range(self.highway_len)
-        num_cars = int(self.init_density * self.highway_len)
-        car_positions = random.sample(all_positions, num_cars)
-        car_velocities = [random.randint(0, self.max_velocity) for _ in range(num_cars)]
-        cars = self.__gen_cars(car_positions, car_velocities)
-        return cars
 
     def animate(self, **kwargs):
         self.__anim = plot1d_animate(self.__ca, **kwargs)
         return self.__anim
-
-    def __plot_over_time(self, vals: np.array, ylabel: str, **kwargs):
-        plt.style.use("classic")
-        # plt.figure(figsize=(10, 10))
-        plt.imshow(vals, **kwargs)
-        plt.xlabel("Timestep")
-        plt.ylabel(ylabel)
-        plt.title(f"{ylabel.capitalize()} over time plot", y=1.05)
-        plt.show()
 
     def plot_space_time(self):
         self.__plot_over_time(self.__ca.T, "Active cells", cmap=plt.get_cmap("viridis"))
@@ -155,6 +101,14 @@ class TrafficCA:
         scale_coef = 100 / self.max_velocity
         matrix *= scale_coef
         self.__plot_over_time(matrix, "Velocity", cmap=plt.get_cmap("inferno"))
+
+    def __plot_over_time(self, vals: np.array, ylabel: str, **kwargs):
+        plt.style.use("classic")
+        plt.imshow(vals, **kwargs)
+        plt.xlabel("Timestep")
+        plt.ylabel(ylabel)
+        plt.title(f"{ylabel.capitalize()} over time plot", y=1.05)
+        plt.show()
 
     def plot_mean_velocity_time(self):
         mean_velocities = self.__compute_mean_velocities()
@@ -181,7 +135,10 @@ class TrafficCA:
         ]
 
     def __plot_scalar_over_time(
-        self, Y: list, label: str, ylim: Optional[tuple[float, float]] = None
+        self,
+        Y: list | np.ndarray,
+        label: str,
+        ylim: Optional[tuple[float, float]] = None,
     ):
         plt.style.use("seaborn-darkgrid")
         X = range(self.timesteps)
@@ -192,10 +149,11 @@ class TrafficCA:
         if ylim is not None:
             start, end = ylim
             plt.ylim(start, end)
-        if self.accident is not None:
+        if self.accident is not None and self.accident.start_timestep < self.timesteps:
+            end_timestep = min(self.accident.end_timestep, self.timesteps)
             plt.axvspan(
                 self.accident.start_timestep,
-                self.accident.end_timestep,
+                end_timestep,
                 color="red",
                 alpha=0.4,
                 label="Accident",
@@ -219,9 +177,8 @@ class TrafficCA:
         ax.set_zlabel("Velocity")
         plt.show()
 
-    def __check_normalized_float_attr(self, name: str, val: float) -> float:
+    def __check_normalized_float_attr(self, name: str, val: float) -> None:
         if not (0 <= val <= 1):
             raise ValueError(
                 f"{name.capitalize()} must be between 0 and 1, please provide a valid value."
             )
-        return val
