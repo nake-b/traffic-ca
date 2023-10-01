@@ -3,8 +3,8 @@ Modelling traffic using cellular automata. Currently only supports NaSch (STCA) 
 ![](media/tca.gif)
 
 ## Background
-Open source library written as the final project "Modelling traffic using Cellular Automata", for the course "Mathematical Modelling and Simulation", at Prirodno-matematički fakultet, Univerzitet u Tuzli.\
-Uses [cellpylib](https://github.com/lantunes/cellpylib) -  *Antunes, L. M. (2021). CellPyLib: A Python Library for working with Cellular Automata. Journal of Open Source Software, 6(67), 3608.*
+Python package written as part of the final project 'Modeling traffic using Cellular Automata' for the course 'Mathematical Modeling and Simulation' at Prirodno-matematički fakultet, Univerzitet u Tuzli. The final project paper (written in Bosnian language) is available [here](paper.pdf).\
+Built on top of [cellpylib](https://github.com/lantunes/cellpylib) -  *Antunes, L. M. (2021). CellPyLib: A Python Library for working with Cellular Automata. Journal of Open Source Software, 6(67), 3608.*
 
 ## How to install
 1. Create and activate conda environment.
