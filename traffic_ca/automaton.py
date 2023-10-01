@@ -23,6 +23,21 @@ class TrafficCA:
         accident: Optional[Accident] = None,
         timesteps: Optional[int] = None,
     ):
+        """
+        NaSch (STCA) Cellular Automaton with car entry queue and soft boundary. Simulates traffic flow using
+        cellular automata, with each active cell representing a car populating a location on the highway. Soft
+        boundary and entry queue means that cars "exit" the highway once they reach the right side end, and new cars
+        queue up on the left side to join the highway. If the first (left) automaton's cell is free (inactive/dead),
+        a car is popped from the entry queue and joins the highway.
+        :param highway_len: length of the 1D cellular automaton
+        :param max_velocity: maximum velocity (number of cells moved in a timestep) a car can reach
+        :param init_density: initial density of cars on the highway (#cars/highway_len - between 0 and 1)
+        :param slowdown_probability: probability that a car will randomly slow down - the automaton's stochastic
+                                     component which induces human-like behaviour
+        :param car_entry_probability: probability that a new car will attempt to join the highway (enter waiting queue)
+        :param accident: optional accident that causes a road block
+        :param timesteps: number of timesteps to evolve
+        """
         self.highway_len = highway_len
         self.max_velocity = max_velocity
         self.accident = accident
@@ -90,13 +105,22 @@ class TrafficCA:
         self.__velocity_matrix.append(vels)
 
     def animate(self, **kwargs):
+        """
+        Animate the automaton's evolution
+        """
         self.__anim = plot1d_animate(self.__ca, **kwargs)
         return self.__anim
 
     def plot_space_time(self):
+        """
+        Produce a plot that shows active cells (cars) in every timestep.
+        """
         self.__plot_over_time(self.__ca.T, "Active cells", cmap=plt.get_cmap("viridis"))
 
     def plot_velocity_time(self):
+        """
+        Produce a plot that shows active cells (cars) and their velocity using a heatmap in every timestep.
+        """
         matrix = np.array(self.__velocity_matrix).T
         scale_coef = 100 / self.max_velocity
         matrix *= scale_coef
@@ -111,15 +135,24 @@ class TrafficCA:
         plt.show()
 
     def plot_mean_velocity_time(self):
+        """
+        Plot the mean velocity of all cars over time
+        """
         mean_velocities = self.__compute_mean_velocities()
         self.__plot_scalar_over_time(
             mean_velocities, "Mean velocity", (0, max(mean_velocities) + 0.5)
         )
 
     def plot_density_time(self):
+        """
+        Plot the highway density (#cars/highway_length) over time
+        """
         self.__plot_scalar_over_time(self.__compute_densities(), "Density", (0, 1))
 
     def plot_flow_time(self):
+        """
+        Plot the traffic flow (mean car velocity multiplied by highway density) over time
+        """
         mean_velocities = self.__compute_mean_velocities()
         densities = self.__compute_densities()
         flow_vector = np.array(mean_velocities) * np.array(densities)
@@ -162,6 +195,9 @@ class TrafficCA:
         plt.show()
 
     def plot_space_velocity_time(self):
+        """
+        Produce a 3D plot showing the space/velocity/time relationship
+        """
         plt.style.use("seaborn-darkgrid")
         fig = plt.figure(figsize=(10, 10))
         ax = fig.add_subplot(projection="3d")
